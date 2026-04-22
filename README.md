@@ -284,3 +284,7 @@ PHP_Laravel12_Pest/
 ---
 
 Your PHP_Laravel12_Pest Project is Now Ready!
+<<<<<<< HEAD
+=======
+
+>>>>>>> development
