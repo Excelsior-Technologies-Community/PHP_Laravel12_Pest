@@ -1,36 +1,43 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    // List Users with search
     public function index(Request $request)
     {
+        $request->validate([
+            'search' => 'nullable|string|max:255',
+        ]);
+
         $query = User::query();
 
-        if ($request->has('search')) {
-            $query->where('name', 'like', "%{$request->search}%")
-                ->orWhere('email', 'like', "%{$request->search}%");
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
         }
+
+        $users = $query->latest()->paginate(5);
 
         return response()->json([
             'status' => true,
             'message' => 'User List',
-            'data' => $query->get()
+            'data' => $users
         ]);
     }
 
-    // Soft Delete User
     public function destroy(User $user)
     {
         $user->delete();
         return response()->json(['status' => true, 'message' => 'User deleted']);
     }
 
-    // Restore Soft Deleted User
     public function restore($id)
     {
         $user = User::withTrashed()->findOrFail($id);
@@ -38,7 +45,6 @@ class UserController extends Controller
         return response()->json(['status' => true, 'message' => 'User restored']);
     }
 
-    // Toggle Status
     public function toggleStatus(User $user)
     {
         $user->status = !$user->status;
@@ -46,7 +52,6 @@ class UserController extends Controller
         return response()->json(['status' => true, 'message' => 'Status updated']);
     }
 
-    // Export CSV
     public function export()
     {
         $users = User::all();
